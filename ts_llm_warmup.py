@@ -196,7 +196,8 @@ torch.save(model_wrapper.ts_encoder.state_dict(),saved_file)
 """embeds = model_wrapper.llm_model.get_input_embeddings().state_dict()
 torch.save(embeds, os.path.join(os.environ["SLURM_TMPDIR"], "aligned_embeddings.pt"))"""
 ##tokenizer saved
-tokenizer.save_pretrained(os.path.join(os.environ["SLURM_TMPDIR"],'llm_tokenizer'))
+#tokenizer.save_pretrained(os.path.join(os.environ["SLURM_TMPDIR"],'llm_tokenizer'))
+
 ### save the plot
 out_path = os.path.join(os.environ["SLURM_TMPDIR"], "training_loss_prewarmup_MTS.png")
 import matplotlib.pyplot as plt
