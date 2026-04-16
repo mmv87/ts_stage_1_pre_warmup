@@ -52,7 +52,6 @@ class LLM_wrapper(nn.Module):
 
         self.input_embeds=self.llm_model.get_input_embeddings()
         self.input_embeds.requires_grad_(True)
-        
         self.ts_conv_module=ConvFeatureExtraction(self.conv_layers,dropout=0.1)
         self.ts_transformer=PatchTSTEncoder(patch_len=self.P,n_layers=2,d_model=512,n_heads=4,
                                 shared_embedding=True,d_ff=1024,norm='Layer',attn_dropout=0.,dropout=0.1,activation='gelu',store_attn=False,res_attention=False,pre_norm=True,pe='zeros',learn_pe=True,verbose=False)
