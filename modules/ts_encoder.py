@@ -13,35 +13,41 @@ class llm_projection(nn.Module):
         super().__init__()
         self.conv_module=conv_module
         self.trans_module=trans_module
-        self.d_fusion=d_fusion
+        self.d_fusion=d_fusion ###intermediate dimesnion to 512--> 1024-->3072
         self.d_llm=d_llm
         self.conv_features=conv_features
         self.trans_embedding=trans_embedding
+
+        #filter based on z_conv
         self.filter_gen = nn.Sequential(
-            nn.Linear(self.conv_features, self.d_fusion),
-            nn.LayerNorm(self.d_fusion),
+            nn.Linear(self.conv_features, self.trans_embedding),
+            nn.LayerNorm(self.trans_embedding),
             nn.Sigmoid()
         )
-        ##self.conv_proj=nn.Linear(self.conv_features,self.d_fusion)
-        self.trans_proj=nn.Linear(self.trans_embedding,self.d_fusion)
-        
+        ###multimodal_bridge to project from z_trans to llm_embed
+        self.mm_bridge=nn.Sequential(
+            nn.Linear(self.trans_embedding,self.d_fusion),
+            nn.GELU(),
+            nn.Linear(self.d_fusion,self.d_llm)
+        )
         ###self.gate=nn.Linear(2*self.d_fusion,self.d_fusion)
-        self.llm_projection=nn.Linear(self.d_fusion,self.d_llm)
+        ###self.llm_projection=nn.Linear(self.d_fusion,self.d_llm)
         self.norm_projection=nn.LayerNorm(self.d_llm)
         
     def forward(self,x):
         conv_embed= self.conv_module(x)
         trans_embed=self.trans_module(x)
         ##z_conv=self.conv_proj(conv_embed)
+        ##z_conv to create a mask.
         z_mask=self.filter_gen(conv_embed)
-        z_trans=self.trans_proj(trans_embed)
+        z_trans=self.mm_bridge(trans_embed)
         z_gated=z_trans*z_mask
         ##g=torch.sigmoid(self.gate(torch.cat([z_conv,z_trans],dim=-1)))
         ###z_gated=g*z_conv+(1.0-g)*z_trans
-        z_llm = self.llm_projection(z_gated+z_trans)
+        ##z_llm = self.llm_projection(z_gated+z_trans)
         ##layer norm
-        z_norm = self.norm_projection(z_llm)
-        return z_norm
+        z_llm = self.norm_projection(z_gated)
+        return z_llm
 
 
 """
