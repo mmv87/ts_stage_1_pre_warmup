@@ -39,13 +39,14 @@ tokenizer.add_special_tokens(special_token_dict)
 ##dataset for IFT.jsonl file for univariate data
 
 class ts_textual(Dataset): 
-    def __init__(self,patch_len,stride,tokenizer,file,device=device):
+    def __init__(self,patch_len,stride,tokenizer,file,sample_size,device=device):
         super().__init__()
         self.patch_len=patch_len
         self.stride=stride
         self.tokenizer=tokenizer
         self.file=file
         self.device =device
+        self.sample_size=sample_size
         self.byte_offset=[]
         
         with open(self.file,'rb') as f:
@@ -60,7 +61,7 @@ class ts_textual(Dataset):
                     except:
                         print('error in the line')
         
-        self.sliced_offset=self.byte_offset[:2500]
+        self.sliced_offset=self.byte_offset[:self.sample_size]
 
     def __len__(self):
         return len(self.sliced_offset)
@@ -241,19 +242,15 @@ class ts_textual(Dataset):
         return ts_patched       
     
     def ts_pair_indices(self,tokenized):
-        """tokenized= self.tokenizer(prompt,return_tensors='pt',add_special_tokens=False)
-        input_ids= tokenized['input_ids'][0]"""
         ts_start_token=self.tokenizer.convert_tokens_to_ids('<ts>')
         ts_end_token=self.tokenizer.convert_tokens_to_ids('<ts/>')
         ts_position=[]
-    
         ##data structure to save the <ts>,<ts/> tokens ,list of tuples
         for i,token_id in enumerate(tokenized.tolist()):
             if (token_id==ts_start_token):
                 ts_position.append(('start',i))
             elif (token_id==ts_end_token):
                 ts_position.append(('end',i))
-                
         stack =[]
         ts_pairs=[]
         
@@ -295,8 +292,9 @@ class ts_textual(Dataset):
         input = sample['input']
         output = sample['output']
         timeseries=sample['timeseries'] ###list of lists
+        prompt=f"<|system|>You are helpful AI assistant<|end|><|user|>{input}<|end|><|assistant|>"
         
-        input_ids=self.tokenizer(input,return_tensors='pt',add_special_tokens=False)['input_ids'][0]
+        input_ids=self.tokenizer(prompt,return_tensors='pt',add_special_tokens=False)['input_ids'][0]
         output_ids=self.tokenizer(output,return_tensors='pt',add_special_tokens=False)['input_ids'][0]
         ###total_textual_ids
         combined_ids=torch.cat([input_ids,output_ids],dim=0)
@@ -354,8 +352,6 @@ def collate_func(batch,tokenizer=None):
 dataset_for_test=ts_textual(128,128,tokenizer,ift_dataset,device=device)
 dataloader=DataLoader(dataset_for_test,batch_size=1,shuffle=True,collate_fn=lambda b:collate_func(b,tokenizer=tokenizer))
 #input_embeds = model.get_input_embeddings()
-
-
 for idx,batch in enumerate(dataloader):
     if idx<2:
         print(batch['time_series'].shape)

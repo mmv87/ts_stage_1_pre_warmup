@@ -32,7 +32,7 @@ import json
 _json_file = os.path.join(os.environ["SLURM_TMPDIR"],"ift_train.jsonl")
 
 ###datapipeline
-dataset=ts_textual(128,128,tokenizer,_json_file,device=device)
+dataset=ts_textual(128,128,tokenizer,_json_file,10000,device=device)
 dataloader=DataLoader(dataset,batch_size=1,shuffle=True,collate_fn=lambda b:collate_func(b,tokenizer=tokenizer))
 """
 dataset= ts_multimodal_text(128,128,_json_file,tokenizer,device=device,model_dtype=None)
@@ -119,6 +119,7 @@ class LLM_wrapper(nn.Module):
         return output,input_embeddings
     
 from tqdm import tqdm
+##features,kernel_zise,stride
 conv_layers=[(128,5,1),(64,3,1)]
 model_wrapper=LLM_wrapper(tokenizer,conv_layers,128,model,device=device)
 model_wrapper.train()
