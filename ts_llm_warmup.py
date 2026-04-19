@@ -187,14 +187,13 @@ for epoch in range(1):  ##1 epochs
 
 ##x=len(epoch_losses)
 ###save the ts_encoder and the llm_input_embedding
-saved_file=os.path.join(os.environ["SLURM_TMPDIR"],'ts_enc_stage1_pre_warmup_ver3.pth')
+saved_file=os.path.join(os.environ["SLURM_TMPDIR"],'ts_enc_stage1_warmup.pth')
 torch.save(model_wrapper.ts_encoder.state_dict(),saved_file)
 ###embedding layer 
-"""embeds = model_wrapper.llm_model.get_input_embeddings().state_dict()
-torch.save(embeds, os.path.join(os.environ["SLURM_TMPDIR"], "aligned_embeddings.pt"))"""
+embeds = model_wrapper.llm_model.get_input_embeddings().state_dict()
+torch.save(embeds, os.path.join(os.environ["SLURM_TMPDIR"], "embeddings_layer.pt"))
 ##tokenizer saved
 #tokenizer.save_pretrained(os.path.join(os.environ["SLURM_TMPDIR"],'llm_tokenizer'))
-
 ### save the plot
 out_path = os.path.join(os.environ["SLURM_TMPDIR"], "training_loss_prewarmup_MTS.png")
 import matplotlib.pyplot as plt
